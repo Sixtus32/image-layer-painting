@@ -1,19 +1,24 @@
-import React, { useMemo } from "react";
-import { Image, Layer, Rect } from "react-konva";
+import React, { useEffect, useState } from "react";
+import { Image, Layer } from "react-konva";
 
 const BackgroundImage = ({ backgroundImageUrl, size }) => {
-  const image = useMemo(() => {
+  const [ image, setImage] = useState(null);
+  useEffect(() => {
     const imageObj = new window.Image();
     imageObj.src = backgroundImageUrl;
-    return imageObj;
+    imageObj.onload = () => {
+      setImage(imageObj);
+    }
+    imageObj.onerror = () => {
+      console.error('Error loading image:', backgroundImageUrl);
+    }
   }, [backgroundImageUrl]);
+
   return (
-    <Layer>
-        <Rect x={100} y={100} width={100} height={100}/>
-      <Image image={image} />
-    </Layer>
+    <>
+      <Layer>{image && <Image image={image} />}</Layer>
+    </>
   );
 };
 
 export default BackgroundImage;
-
