@@ -2,17 +2,21 @@
 /* eslint-disable no-cond-assign */
 import React, { useEffect, useRef, useState } from "react";
 import { throttleWrite } from "../../utils/utils";
-import { Layer, Line, Rect, Stage } from "react-konva";
+import { Image, Layer, Line, Rect, Stage } from "react-konva";
 import BackgroundImage from "../ImageBackground";
 import useCursorGhost from "../../hooks/useCursorGhost";
 import useDrawingTool from "../../hooks/useDrawingTool";
 import DrawingTool from "../Layers/DrawingTool";
 import AiSelectionTool from "../Layers/AiSelectionTool";
 import ToolIcon from "../TooIsIcon";
+import { DefaultMouseIcon } from "../TooIsIcon/SvgIcons";
+import ReactDOMServer from "react-dom/server";
 
-const KonvaDrawer = ({ backgroundImageUrl, onSave }) => {
+const KonvaDrawer = ({ backgroundImageUrl }) => {
   const stageContainerRef = useRef(null);
   const stageRef = useRef(null);
+  const imageRef = useRef(null);
+  const svgUrl = useState(<DefaultMouseIcon />);
 
   // Herramientas
   const [lines, setLines] = useState([]);
@@ -67,6 +71,22 @@ const KonvaDrawer = ({ backgroundImageUrl, onSave }) => {
     setTool(String(value));
   };
 
+  useEffect(() => {
+    if (svgUrl) {
+      // Convertir el JSX en una cadena SVG válida
+      const svgString = ReactDOMServer.renderToStaticMarkup(svgUrl);
+      const encodedData = encodeURIComponent(svgString);
+      const img = new window.Image();
+      img.src = `data:image/svg+xml;charset=utf-8,${encodedData}`;
+      img.onload = () => {
+        if (imageRef.current) {
+          imageRef.current.image(img);
+          imageRef.current.getLayer().batchDraw();
+        }
+      };
+    }
+  }, [svgUrl]);
+
   return (
     <div
       style={{
@@ -87,16 +107,29 @@ const KonvaDrawer = ({ backgroundImageUrl, onSave }) => {
             onTouchStart={handleTouchStart}
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
-            onTouchMove={handleTouchMove}>
+            onTouchMove={handleTouchMove}
+            style={{ cursor: "none"}}
+            >
             <Layer>
+              {backgroundImageUrl && (
+                <BackgroundImage
+                  backgroundImageUrl={backgroundImageUrl}
+                  size={size}
+                />
+              )}
               <Rect width={100} height={100} fill="yellow" />
+              {cursorPosition && (
+                <Image
+                  ref={imageRef}
+                  x={cursorPosition.x - 8}
+                  y={cursorPosition.y - 3}
+                  width={25}
+                  height={25}
+                  listening={false}
+                />
+              )}
             </Layer>
-            {backgroundImageUrl && (
-              <BackgroundImage
-                backgroundImageUrl={backgroundImageUrl}
-                size={size}
-              />
-            )}
+
             <DrawingTool
               tool={tool}
               lines={lines}
@@ -106,7 +139,7 @@ const KonvaDrawer = ({ backgroundImageUrl, onSave }) => {
             <AiSelectionTool
               aiPointsSelection={aiSelectionActing}
               cursorPosition={cursorPosition}
-              svgUrl={<ToolIcon iconType={"ai"} />}
+              // svgUrl={<ToolIcon iconType={"ai"} />}
             />
           </Stage>
         )}

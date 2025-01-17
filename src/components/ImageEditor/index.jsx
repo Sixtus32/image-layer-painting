@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from "react";
 import KonvaDrawer from "../KonvaDrawer";
 
-const ImageEditor = ({ onSave }) => {
+const ImageEditor = () => {
   const [image, setImage] = useState(null);
   const [_, setDrawing] = useState(null);
 
